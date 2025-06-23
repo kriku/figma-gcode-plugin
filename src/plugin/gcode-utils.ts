@@ -1,9 +1,12 @@
-function moveTo(x: number, y: number): string {
-  return `G0 X${x.toFixed(3)} Y${y.toFixed(3)}\n`;
+function moveTo(x: number, y: number, laserPower?: number): string {
+  // G0 is rapid positioning (laser off), always set S0 for safety
+  return `G0 X${x.toFixed(3)} Y${y.toFixed(3)} S0\n`;
 }
 
-function lineTo(x: number, y: number): string {
-  return `G1 X${x.toFixed(3)} Y${y.toFixed(3)}\n`;
+function lineTo(x: number, y: number, laserPower?: number): string {
+  // G1 is linear interpolation (laser on), include S parameter for laser power
+  const sParam = laserPower !== undefined ? ` S${laserPower}` : "";
+  return `G1 X${x.toFixed(3)} Y${y.toFixed(3)}${sParam}\n`;
 }
 
 function arcTo(
@@ -11,20 +14,27 @@ function arcTo(
   y: number,
   i: number,
   j: number,
-  clockwise: boolean = false
+  clockwise: boolean = false,
+  laserPower?: number
 ): string {
   const direction = clockwise ? "G2" : "G3";
+  const sParam = laserPower !== undefined ? ` S${laserPower}` : "";
   return `${direction} X${x.toFixed(3)} Y${y.toFixed(3)} I${i.toFixed(
     3
-  )} J${j.toFixed(3)}\n`;
+  )} J${j.toFixed(3)}${sParam}\n`;
 }
 
-function generateCircleGcode(x: number, y: number, radius: number): string {
+function generateCircleGcode(
+  x: number,
+  y: number,
+  radius: number,
+  laserPower?: number
+): string {
   let gcode = "";
   // Move to start position (rightmost point of circle)
   gcode += moveTo(x + radius, y);
   // Draw circle
-  gcode += arcTo(x + radius, y, -radius, 0); // Second semicircle to complete circle
+  gcode += arcTo(x + radius, y, -radius, 0, false, laserPower); // Second semicircle to complete circle
   return gcode;
 }
 
@@ -33,7 +43,8 @@ function generateEllipseGcode(
   centerY: number,
   radiusX: number,
   radiusY: number,
-  segments: number = 32
+  segments: number = 32,
+  laserPower?: number
 ): string {
   let gcode = "";
   const angleStep = (2 * Math.PI) / segments;
@@ -48,7 +59,7 @@ function generateEllipseGcode(
     const angle = i * angleStep;
     const x = centerX + radiusX * Math.cos(angle);
     const y = centerY + radiusY * Math.sin(angle);
-    gcode += lineTo(x, y);
+    gcode += lineTo(x, y, laserPower);
   }
 
   return gcode;
@@ -56,7 +67,8 @@ function generateEllipseGcode(
 
 function generatePolygonGcode(
   node: PolygonNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -81,7 +93,7 @@ function generatePolygonGcode(
     const angle = -Math.PI / 2 + i * angleStep;
     const x = centerX + radius * Math.cos(angle);
     const y = centerY + radius * Math.sin(angle);
-    gcode += lineTo(x, y);
+    gcode += lineTo(x, y, laserPower);
   }
 
   return gcode;
@@ -89,7 +101,8 @@ function generatePolygonGcode(
 
 function generateStarGcode(
   node: StarNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -116,7 +129,7 @@ function generateStarGcode(
     const angle = -Math.PI / 2 + i * angleStep;
     const x = centerX + radius * Math.cos(angle);
     const y = centerY + radius * Math.sin(angle);
-    gcode += lineTo(x, y);
+    gcode += lineTo(x, y, laserPower);
   }
 
   return gcode;
@@ -124,7 +137,8 @@ function generateStarGcode(
 
 function generateLineGcode(
   node: LineNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -138,14 +152,15 @@ function generateLineGcode(
   // Calculate end point based on line direction and length
   const endX = nodeX + (node.width || 0);
   const endY = nodeY + (node.height || 0);
-  gcode += lineTo(endX, endY);
+  gcode += lineTo(endX, endY, laserPower);
 
   return gcode;
 }
 
 function generateVectorGcode(
   node: VectorNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -157,18 +172,28 @@ function generateVectorGcode(
 
   // Process vector networks (paths)
   if (node.vectorNetwork && node.vectorNetwork.segments.length > 0) {
-    gcode += parseVectorNetwork(node.vectorNetwork, offsetX, offsetY);
+    gcode += parseVectorNetwork(
+      node.vectorNetwork,
+      offsetX,
+      offsetY,
+      laserPower
+    );
   } else if (node.vectorPaths && node.vectorPaths.length > 0) {
     // Fallback to vectorPaths if vectorNetwork is not available
-    gcode += parseVectorPaths([...node.vectorPaths], offsetX, offsetY);
+    gcode += parseVectorPaths(
+      [...node.vectorPaths],
+      offsetX,
+      offsetY,
+      laserPower
+    );
   } else {
     // Final fallback to bounding box if no vector data available
     gcode += "; VECTOR (no path data - using bounding box)\n";
     gcode += moveTo(offsetX, offsetY);
-    gcode += lineTo(offsetX + node.width, offsetY);
-    gcode += lineTo(offsetX + node.width, offsetY + node.height);
-    gcode += lineTo(offsetX, offsetY + node.height);
-    gcode += lineTo(offsetX, offsetY);
+    gcode += lineTo(offsetX + node.width, offsetY, laserPower);
+    gcode += lineTo(offsetX + node.width, offsetY + node.height, laserPower);
+    gcode += lineTo(offsetX, offsetY + node.height, laserPower);
+    gcode += lineTo(offsetX, offsetY, laserPower);
   }
 
   return gcode;
@@ -177,7 +202,8 @@ function generateVectorGcode(
 function parseVectorNetwork(
   vectorNetwork: VectorNetwork,
   offsetX: number,
-  offsetY: number
+  offsetY: number,
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -220,11 +246,12 @@ function parseVectorNetwork(
           segment.tangentStart,
           segment.tangentEnd,
           offsetX,
-          offsetY
+          offsetY,
+          laserPower
         );
       } else {
         // Straight line segment
-        gcode += lineTo(endX, endY);
+        gcode += lineTo(endX, endY, laserPower);
       }
     }
   }
@@ -235,13 +262,14 @@ function parseVectorNetwork(
 function parseVectorPaths(
   vectorPaths: VectorPath[],
   offsetX: number,
-  offsetY: number
+  offsetY: number,
+  laserPower?: number
 ): string {
   let gcode = "";
 
   for (const path of vectorPaths) {
     if (path.data) {
-      gcode += parseSVGPath(path.data, offsetX, offsetY);
+      gcode += parseSVGPath(path.data, offsetX, offsetY, laserPower);
     }
   }
 
@@ -251,7 +279,8 @@ function parseVectorPaths(
 function parseSVGPath(
   pathData: string,
   offsetX: number,
-  offsetY: number
+  offsetY: number,
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -303,7 +332,7 @@ function parseSVGPath(
               currentX += params[i];
               currentY += params[i + 1];
             }
-            gcode += lineTo(offsetX + currentX, offsetY + currentY);
+            gcode += lineTo(offsetX + currentX, offsetY + currentY, laserPower);
           }
         }
         break;
@@ -315,7 +344,7 @@ function parseSVGPath(
           } else {
             currentX += params[0];
           }
-          gcode += lineTo(offsetX + currentX, offsetY + currentY);
+          gcode += lineTo(offsetX + currentX, offsetY + currentY, laserPower);
         }
         break;
 
@@ -326,7 +355,7 @@ function parseSVGPath(
           } else {
             currentY += params[0];
           }
-          gcode += lineTo(offsetX + currentX, offsetY + currentY);
+          gcode += lineTo(offsetX + currentX, offsetY + currentY, laserPower);
         }
         break;
 
@@ -354,7 +383,8 @@ function parseSVGPath(
               offsetX + cp2x,
               offsetY + cp2y,
               offsetX + endX,
-              offsetY + endY
+              offsetY + endY,
+              laserPower
             );
 
             currentX = endX;
@@ -364,7 +394,7 @@ function parseSVGPath(
         break;
 
       case "z": // Close path
-        gcode += lineTo(offsetX + startX, offsetY + startY);
+        gcode += lineTo(offsetX + startX, offsetY + startY, laserPower);
         currentX = startX;
         currentY = startY;
         break;
@@ -382,11 +412,12 @@ function generateBezierGcode(
   tangentStart: VectorVertex | undefined,
   tangentEnd: VectorVertex | undefined,
   offsetX: number,
-  offsetY: number
+  offsetY: number,
+  laserPower?: number
 ): string {
   if (!tangentStart && !tangentEnd) {
     // No tangents, just a straight line
-    return lineTo(endX, endY);
+    return lineTo(endX, endY, laserPower);
   }
 
   // Convert tangent points to control points
@@ -403,7 +434,8 @@ function generateBezierGcode(
     cp2x,
     cp2y,
     endX,
-    endY
+    endY,
+    laserPower
   );
 }
 
@@ -416,6 +448,7 @@ function approximateBezierCurve(
   y2: number,
   x3: number,
   y3: number,
+  laserPower?: number,
   segments: number = 16
 ): string {
   let gcode = "";
@@ -437,7 +470,7 @@ function approximateBezierCurve(
       3 * oneMinusT * t ** 2 * y2 +
       t ** 3 * y3;
 
-    gcode += lineTo(x, y);
+    gcode += lineTo(x, y, laserPower);
   }
 
   return gcode;
@@ -480,7 +513,8 @@ function groupSegmentsIntoPaths(segments: VectorSegment[]): number[][] {
 
 function generateBooleanOperationGcode(
   node: BooleanOperationNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -492,17 +526,18 @@ function generateBooleanOperationGcode(
   // In a real implementation, you'd need to resolve the boolean operation
   gcode += `; BOOLEAN_OPERATION (${node.booleanOperation})\n`;
   gcode += moveTo(nodeX, nodeY);
-  gcode += lineTo(nodeX + node.width, nodeY);
-  gcode += lineTo(nodeX + node.width, nodeY + node.height);
-  gcode += lineTo(nodeX, nodeY + node.height);
-  gcode += lineTo(nodeX, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY, laserPower);
+  gcode += lineTo(nodeX + node.width, nodeY + node.height, laserPower);
+  gcode += lineTo(nodeX, nodeY + node.height, laserPower);
+  gcode += lineTo(nodeX, nodeY, laserPower);
 
   return gcode;
 }
 
 function generateInstanceGcode(
   node: InstanceNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -513,17 +548,18 @@ function generateInstanceGcode(
   // For component instances, draw the bounding box
   gcode += "; INSTANCE (component instance)\n";
   gcode += moveTo(nodeX, nodeY);
-  gcode += lineTo(nodeX + node.width, nodeY);
-  gcode += lineTo(nodeX + node.width, nodeY + node.height);
-  gcode += lineTo(nodeX, nodeY + node.height);
-  gcode += lineTo(nodeX, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY, laserPower);
+  gcode += lineTo(nodeX + node.width, nodeY + node.height, laserPower);
+  gcode += lineTo(nodeX, nodeY + node.height, laserPower);
+  gcode += lineTo(nodeX, nodeY, laserPower);
 
   return gcode;
 }
 
 function generateSliceGcode(
   node: SliceNode,
-  globalPos?: { x: number; y: number }
+  globalPos?: { x: number; y: number },
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -534,16 +570,17 @@ function generateSliceGcode(
   // For slice nodes, draw the bounding box
   gcode += "; SLICE\n";
   gcode += moveTo(nodeX, nodeY);
-  gcode += lineTo(nodeX + node.width, nodeY);
-  gcode += lineTo(nodeX + node.width, nodeY + node.height);
-  gcode += lineTo(nodeX, nodeY + node.height);
-  gcode += lineTo(nodeX, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY, laserPower);
+  gcode += lineTo(nodeX + node.width, nodeY + node.height, laserPower);
+  gcode += lineTo(nodeX, nodeY + node.height, laserPower);
+  gcode += lineTo(nodeX, nodeY, laserPower);
 
   return gcode;
 }
 
 function generateCompoundGcode(
-  node: FrameNode | GroupNode | SectionNode
+  node: FrameNode | GroupNode | SectionNode,
+  laserPower?: number
 ): string {
   let gcode = "";
 
@@ -552,17 +589,21 @@ function generateCompoundGcode(
   // Process all children recursively
   if (node.children && node.children.length > 0) {
     for (const child of node.children) {
-      gcode += generateGcodeForNode(child);
+      gcode += generateGcodeForNode(child, laserPower);
     }
   } else {
     // Fallback to bounding box if no children - use global coordinates
     const globalPos = getGlobalCoordinates(node);
     gcode += `; ${node.type} (empty - drawing bounding box)\n`;
     gcode += moveTo(globalPos.x, globalPos.y);
-    gcode += lineTo(globalPos.x + node.width, globalPos.y);
-    gcode += lineTo(globalPos.x + node.width, globalPos.y + node.height);
-    gcode += lineTo(globalPos.x, globalPos.y + node.height);
-    gcode += lineTo(globalPos.x, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y, laserPower);
+    gcode += lineTo(
+      globalPos.x + node.width,
+      globalPos.y + node.height,
+      laserPower
+    );
+    gcode += lineTo(globalPos.x, globalPos.y + node.height, laserPower);
+    gcode += lineTo(globalPos.x, globalPos.y, laserPower);
   }
 
   gcode += `; ${node.type} END - "${node.name}"\n`;
@@ -596,7 +637,10 @@ function getGlobalCoordinates(node: SceneNode): { x: number; y: number } {
   return { x: globalX, y: globalY };
 }
 
-export function generateGcodeForNode(node: SceneNode): string {
+export function generateGcodeForNode(
+  node: SceneNode,
+  laserPower?: number
+): string {
   console.log("Generating G-code for vector node:", node);
 
   let gcode = "";
@@ -607,10 +651,14 @@ export function generateGcodeForNode(node: SceneNode): string {
   if (node.type === "RECTANGLE") {
     gcode += "; RECTANGLE\n";
     gcode += moveTo(globalPos.x, globalPos.y);
-    gcode += lineTo(globalPos.x + node.width, globalPos.y);
-    gcode += lineTo(globalPos.x + node.width, globalPos.y + node.height);
-    gcode += lineTo(globalPos.x, globalPos.y + node.height);
-    gcode += lineTo(globalPos.x, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y, laserPower);
+    gcode += lineTo(
+      globalPos.x + node.width,
+      globalPos.y + node.height,
+      laserPower
+    );
+    gcode += lineTo(globalPos.x, globalPos.y + node.height, laserPower);
+    gcode += lineTo(globalPos.x, globalPos.y, laserPower);
   } else if (node.type === "ELLIPSE") {
     gcode += "; ELLIPSE\n";
     const centerX = globalPos.x + node.width / 2;
@@ -620,44 +668,59 @@ export function generateGcodeForNode(node: SceneNode): string {
 
     if (radiusX === radiusY) {
       // Perfect circle - use arc commands
-      gcode += generateCircleGcode(centerX, centerY, radiusX);
+      gcode += generateCircleGcode(centerX, centerY, radiusX, laserPower);
     } else {
       // Ellipse - use line segments
-      gcode += generateEllipseGcode(centerX, centerY, radiusX, radiusY);
+      gcode += generateEllipseGcode(
+        centerX,
+        centerY,
+        radiusX,
+        radiusY,
+        32,
+        laserPower
+      );
     }
   } else if (node.type === "POLYGON") {
     gcode += "; POLYGON\n";
-    gcode += generatePolygonGcode(node as PolygonNode, globalPos);
+    gcode += generatePolygonGcode(node as PolygonNode, globalPos, laserPower);
   } else if (node.type === "STAR") {
     gcode += "; STAR\n";
-    gcode += generateStarGcode(node as StarNode, globalPos);
+    gcode += generateStarGcode(node as StarNode, globalPos, laserPower);
   } else if (node.type === "LINE") {
     gcode += "; LINE\n";
-    gcode += generateLineGcode(node as LineNode, globalPos);
+    gcode += generateLineGcode(node as LineNode, globalPos, laserPower);
   } else if (node.type === "VECTOR") {
-    gcode += generateVectorGcode(node as VectorNode, globalPos);
+    gcode += generateVectorGcode(node as VectorNode, globalPos, laserPower);
   } else if (node.type === "BOOLEAN_OPERATION") {
     gcode += generateBooleanOperationGcode(
       node as BooleanOperationNode,
-      globalPos
+      globalPos,
+      laserPower
     );
   } else if (node.type === "INSTANCE") {
-    gcode += generateInstanceGcode(node as InstanceNode, globalPos);
+    gcode += generateInstanceGcode(node as InstanceNode, globalPos, laserPower);
   } else if (node.type === "SLICE") {
-    gcode += generateSliceGcode(node as SliceNode, globalPos);
+    gcode += generateSliceGcode(node as SliceNode, globalPos, laserPower);
   } else if (node.type === "TEXT") {
     gcode += "; TEXT (bounding box only)\n";
     gcode += moveTo(globalPos.x, globalPos.y);
-    gcode += lineTo(globalPos.x + node.width, globalPos.y);
-    gcode += lineTo(globalPos.x + node.width, globalPos.y + node.height);
-    gcode += lineTo(globalPos.x, globalPos.y + node.height);
-    gcode += lineTo(globalPos.x, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y, laserPower);
+    gcode += lineTo(
+      globalPos.x + node.width,
+      globalPos.y + node.height,
+      laserPower
+    );
+    gcode += lineTo(globalPos.x, globalPos.y + node.height, laserPower);
+    gcode += lineTo(globalPos.x, globalPos.y, laserPower);
   } else if (
     node.type === "FRAME" ||
     node.type === "GROUP" ||
     node.type === "SECTION"
   ) {
-    gcode += generateCompoundGcode(node as FrameNode | GroupNode | SectionNode);
+    gcode += generateCompoundGcode(
+      node as FrameNode | GroupNode | SectionNode,
+      laserPower
+    );
   } else {
     gcode += `; Unsupported node type: ${node.type}\n`;
   }

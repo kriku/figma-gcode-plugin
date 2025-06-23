@@ -62,7 +62,11 @@ PLUGIN_CHANNEL.registerMessageHandler("exportSelection", async () => {
 
 PLUGIN_CHANNEL.registerMessageHandler(
   "generateGcode",
-  async (feedRate = 1000) => {
+  async (feedRate?: number, laserPower?: number) => {
+    // Set default values if not provided
+    const feedRateValue = feedRate || 1000;
+    const laserPowerValue: number = laserPower || 255;
+
     const nodes = figma.currentPage.selection;
     if (nodes.length === 0) {
       throw new Error("No selection is present.");
@@ -73,15 +77,16 @@ PLUGIN_CHANNEL.registerMessageHandler(
     gcode += `; Date: ${new Date().toISOString()}\n`;
     gcode += `; Page: ${figma.currentPage.name}\n`;
     gcode += `; Selected objects: ${nodes.length}\n`;
-    gcode += `; Feed Rate: ${feedRate} mm/min\n`;
+    gcode += `; Feed Rate: ${feedRateValue} mm/min\n`;
+    gcode += `; Laser Power: ${laserPowerValue} (S parameter)\n`;
     gcode += `;\n`;
     gcode += `G21 ; Set units to millimeters\n`;
     gcode += `G90 ; Absolute positioning\n`;
-    gcode += `G0 F${feedRate} ; Set feed rate\n`;
+    gcode += `G0 F${feedRateValue} S0 ; Set feed rate and ensure laser is off\n`;
     gcode += `\n`;
 
     for (const node of nodes) {
-      gcode += generateGcodeForNode(node);
+      gcode += generateGcodeForNode(node, laserPowerValue);
     }
 
     // Add ending commands

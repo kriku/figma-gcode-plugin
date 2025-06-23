@@ -9,6 +9,7 @@ import "@ui/styles/main.scss";
 function App() {
   const [gcode, setGcode] = useState("");
   const [feedRate, setFeedRate] = useState(1000); // Default feed rate in mm/min
+  const [laserPower, setLaserPower] = useState(1000); // Default laser power (S parameter)
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const saveToFile = () => {
@@ -83,13 +84,33 @@ function App() {
             }}
           />
         </div>
+        <div style={{ marginBottom: 15 }}>
+          <label htmlFor="laserPower" style={{ display: "block", marginBottom: 5 }}>
+            Laser Power (S parameter, 0-1000):
+          </label>
+          <input
+            id="laserPower"
+            type="number"
+            value={laserPower}
+            onChange={(e) => setLaserPower(Number(e.target.value))}
+            min="0"
+            max="1000"
+            style={{
+              width: "100%",
+              padding: "5px 10px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "14px"
+            }}
+          />
+        </div>
         <Button
           onClick={async () => {
             try {
               const result = await UI_CHANNEL.request(
                 PLUGIN,
                 "generateGcode",
-                [feedRate]
+                [feedRate, laserPower]
               );
               if (typeof result === "string") {
                 setGcode(result);
