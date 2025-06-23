@@ -54,12 +54,19 @@ function generateEllipseGcode(
   return gcode;
 }
 
-function generatePolygonGcode(node: PolygonNode): string {
+function generatePolygonGcode(
+  node: PolygonNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
 
+  // Use global position if provided, otherwise use node's local position
+  const nodeX = globalPos ? globalPos.x : node.x;
+  const nodeY = globalPos ? globalPos.y : node.y;
+
   // For regular polygons, calculate vertices
-  const centerX = node.x + node.width / 2;
-  const centerY = node.y + node.height / 2;
+  const centerX = nodeX + node.width / 2;
+  const centerY = nodeY + node.height / 2;
   const radius = Math.min(node.width, node.height) / 2;
   const sides = node.pointCount || 3;
   const angleStep = (2 * Math.PI) / sides;
@@ -80,11 +87,18 @@ function generatePolygonGcode(node: PolygonNode): string {
   return gcode;
 }
 
-function generateStarGcode(node: StarNode): string {
+function generateStarGcode(
+  node: StarNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
 
-  const centerX = node.x + node.width / 2;
-  const centerY = node.y + node.height / 2;
+  // Use global position if provided, otherwise use node's local position
+  const nodeX = globalPos ? globalPos.x : node.x;
+  const nodeY = globalPos ? globalPos.y : node.y;
+
+  const centerX = nodeX + node.width / 2;
+  const centerY = nodeY + node.height / 2;
   const outerRadius = Math.min(node.width, node.height) / 2;
   const innerRadius = outerRadius * (node.innerRadius || 0.5);
   const points = node.pointCount || 5;
@@ -108,39 +122,53 @@ function generateStarGcode(node: StarNode): string {
   return gcode;
 }
 
-function generateLineGcode(node: LineNode): string {
+function generateLineGcode(
+  node: LineNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
 
+  // Use global position if provided, otherwise use node's local position
+  const nodeX = globalPos ? globalPos.x : node.x;
+  const nodeY = globalPos ? globalPos.y : node.y;
+
   // Move to start point
-  gcode += moveTo(node.x, node.y);
+  gcode += moveTo(nodeX, nodeY);
 
   // Calculate end point based on line direction and length
-  const endX = node.x + (node.width || 0);
-  const endY = node.y + (node.height || 0);
+  const endX = nodeX + (node.width || 0);
+  const endY = nodeY + (node.height || 0);
   gcode += lineTo(endX, endY);
 
   return gcode;
 }
 
-function generateVectorGcode(node: VectorNode): string {
+function generateVectorGcode(
+  node: VectorNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
+
+  // Use global position if provided, otherwise use node's local position
+  const offsetX = globalPos ? globalPos.x : node.x;
+  const offsetY = globalPos ? globalPos.y : node.y;
 
   gcode += "; VECTOR\n";
 
   // Process vector networks (paths)
   if (node.vectorNetwork && node.vectorNetwork.segments.length > 0) {
-    gcode += parseVectorNetwork(node.vectorNetwork, node.x, node.y);
+    gcode += parseVectorNetwork(node.vectorNetwork, offsetX, offsetY);
   } else if (node.vectorPaths && node.vectorPaths.length > 0) {
     // Fallback to vectorPaths if vectorNetwork is not available
-    gcode += parseVectorPaths([...node.vectorPaths], node.x, node.y);
+    gcode += parseVectorPaths([...node.vectorPaths], offsetX, offsetY);
   } else {
     // Final fallback to bounding box if no vector data available
     gcode += "; VECTOR (no path data - using bounding box)\n";
-    gcode += moveTo(node.x, node.y);
-    gcode += lineTo(node.x + node.width, node.y);
-    gcode += lineTo(node.x + node.width, node.y + node.height);
-    gcode += lineTo(node.x, node.y + node.height);
-    gcode += lineTo(node.x, node.y);
+    gcode += moveTo(offsetX, offsetY);
+    gcode += lineTo(offsetX + node.width, offsetY);
+    gcode += lineTo(offsetX + node.width, offsetY + node.height);
+    gcode += lineTo(offsetX, offsetY + node.height);
+    gcode += lineTo(offsetX, offsetY);
   }
 
   return gcode;
@@ -450,45 +478,66 @@ function groupSegmentsIntoPaths(segments: VectorSegment[]): number[][] {
   return paths;
 }
 
-function generateBooleanOperationGcode(node: BooleanOperationNode): string {
+function generateBooleanOperationGcode(
+  node: BooleanOperationNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
+
+  // Use global position if provided, otherwise use node's local position
+  const nodeX = globalPos ? globalPos.x : node.x;
+  const nodeY = globalPos ? globalPos.y : node.y;
 
   // For boolean operations, we'll approximate with a bounding box
   // In a real implementation, you'd need to resolve the boolean operation
   gcode += `; BOOLEAN_OPERATION (${node.booleanOperation})\n`;
-  gcode += moveTo(node.x, node.y);
-  gcode += lineTo(node.x + node.width, node.y);
-  gcode += lineTo(node.x + node.width, node.y + node.height);
-  gcode += lineTo(node.x, node.y + node.height);
-  gcode += lineTo(node.x, node.y);
+  gcode += moveTo(nodeX, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY + node.height);
+  gcode += lineTo(nodeX, nodeY + node.height);
+  gcode += lineTo(nodeX, nodeY);
 
   return gcode;
 }
 
-function generateInstanceGcode(node: InstanceNode): string {
+function generateInstanceGcode(
+  node: InstanceNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
+
+  // Use global position if provided, otherwise use node's local position
+  const nodeX = globalPos ? globalPos.x : node.x;
+  const nodeY = globalPos ? globalPos.y : node.y;
 
   // For component instances, draw the bounding box
   gcode += "; INSTANCE (component instance)\n";
-  gcode += moveTo(node.x, node.y);
-  gcode += lineTo(node.x + node.width, node.y);
-  gcode += lineTo(node.x + node.width, node.y + node.height);
-  gcode += lineTo(node.x, node.y + node.height);
-  gcode += lineTo(node.x, node.y);
+  gcode += moveTo(nodeX, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY + node.height);
+  gcode += lineTo(nodeX, nodeY + node.height);
+  gcode += lineTo(nodeX, nodeY);
 
   return gcode;
 }
 
-function generateSliceGcode(node: SliceNode): string {
+function generateSliceGcode(
+  node: SliceNode,
+  globalPos?: { x: number; y: number }
+): string {
   let gcode = "";
+
+  // Use global position if provided, otherwise use node's local position
+  const nodeX = globalPos ? globalPos.x : node.x;
+  const nodeY = globalPos ? globalPos.y : node.y;
 
   // For slice nodes, draw the bounding box
   gcode += "; SLICE\n";
-  gcode += moveTo(node.x, node.y);
-  gcode += lineTo(node.x + node.width, node.y);
-  gcode += lineTo(node.x + node.width, node.y + node.height);
-  gcode += lineTo(node.x, node.y + node.height);
-  gcode += lineTo(node.x, node.y);
+  gcode += moveTo(nodeX, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY);
+  gcode += lineTo(nodeX + node.width, nodeY + node.height);
+  gcode += lineTo(nodeX, nodeY + node.height);
+  gcode += lineTo(nodeX, nodeY);
 
   return gcode;
 }
@@ -506,13 +555,14 @@ function generateCompoundGcode(
       gcode += generateGcodeForNode(child);
     }
   } else {
-    // Fallback to bounding box if no children
+    // Fallback to bounding box if no children - use global coordinates
+    const globalPos = getGlobalCoordinates(node);
     gcode += `; ${node.type} (empty - drawing bounding box)\n`;
-    gcode += moveTo(node.x, node.y);
-    gcode += lineTo(node.x + node.width, node.y);
-    gcode += lineTo(node.x + node.width, node.y + node.height);
-    gcode += lineTo(node.x, node.y + node.height);
-    gcode += lineTo(node.x, node.y);
+    gcode += moveTo(globalPos.x, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y + node.height);
+    gcode += lineTo(globalPos.x, globalPos.y + node.height);
+    gcode += lineTo(globalPos.x, globalPos.y);
   }
 
   gcode += `; ${node.type} END - "${node.name}"\n`;
@@ -520,22 +570,51 @@ function generateCompoundGcode(
   return gcode;
 }
 
+// Coordinate transformation utilities
+function getGlobalCoordinates(node: SceneNode): { x: number; y: number } {
+  // Use absoluteBoundingBox if available for more accurate global positioning
+  if ("absoluteBoundingBox" in node && node.absoluteBoundingBox) {
+    return {
+      x: node.absoluteBoundingBox.x,
+      y: node.absoluteBoundingBox.y,
+    };
+  }
+
+  // Fallback: calculate global coordinates by traversing parent hierarchy
+  let globalX = node.x;
+  let globalY = node.y;
+  let parent = node.parent;
+
+  while (parent && parent.type !== "PAGE") {
+    if ("x" in parent && "y" in parent) {
+      globalX += parent.x;
+      globalY += parent.y;
+    }
+    parent = parent.parent;
+  }
+
+  return { x: globalX, y: globalY };
+}
+
 export function generateGcodeForNode(node: SceneNode): string {
   console.log("Generating G-code for vector node:", node);
 
   let gcode = "";
 
+  // Get global coordinates for the node (transforms local frame coordinates to global canvas coordinates)
+  const globalPos = getGlobalCoordinates(node);
+
   if (node.type === "RECTANGLE") {
     gcode += "; RECTANGLE\n";
-    gcode += moveTo(node.x, node.y);
-    gcode += lineTo(node.x + node.width, node.y);
-    gcode += lineTo(node.x + node.width, node.y + node.height);
-    gcode += lineTo(node.x, node.y + node.height);
-    gcode += lineTo(node.x, node.y);
+    gcode += moveTo(globalPos.x, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y + node.height);
+    gcode += lineTo(globalPos.x, globalPos.y + node.height);
+    gcode += lineTo(globalPos.x, globalPos.y);
   } else if (node.type === "ELLIPSE") {
     gcode += "; ELLIPSE\n";
-    const centerX = node.x + node.width / 2;
-    const centerY = node.y + node.height / 2;
+    const centerX = globalPos.x + node.width / 2;
+    const centerY = globalPos.y + node.height / 2;
     const radiusX = node.width / 2;
     const radiusY = node.height / 2;
 
@@ -548,28 +627,31 @@ export function generateGcodeForNode(node: SceneNode): string {
     }
   } else if (node.type === "POLYGON") {
     gcode += "; POLYGON\n";
-    gcode += generatePolygonGcode(node as PolygonNode);
+    gcode += generatePolygonGcode(node as PolygonNode, globalPos);
   } else if (node.type === "STAR") {
     gcode += "; STAR\n";
-    gcode += generateStarGcode(node as StarNode);
+    gcode += generateStarGcode(node as StarNode, globalPos);
   } else if (node.type === "LINE") {
     gcode += "; LINE\n";
-    gcode += generateLineGcode(node as LineNode);
+    gcode += generateLineGcode(node as LineNode, globalPos);
   } else if (node.type === "VECTOR") {
-    gcode += generateVectorGcode(node as VectorNode);
+    gcode += generateVectorGcode(node as VectorNode, globalPos);
   } else if (node.type === "BOOLEAN_OPERATION") {
-    gcode += generateBooleanOperationGcode(node as BooleanOperationNode);
+    gcode += generateBooleanOperationGcode(
+      node as BooleanOperationNode,
+      globalPos
+    );
   } else if (node.type === "INSTANCE") {
-    gcode += generateInstanceGcode(node as InstanceNode);
+    gcode += generateInstanceGcode(node as InstanceNode, globalPos);
   } else if (node.type === "SLICE") {
-    gcode += generateSliceGcode(node as SliceNode);
+    gcode += generateSliceGcode(node as SliceNode, globalPos);
   } else if (node.type === "TEXT") {
     gcode += "; TEXT (bounding box only)\n";
-    gcode += moveTo(node.x, node.y);
-    gcode += lineTo(node.x + node.width, node.y);
-    gcode += lineTo(node.x + node.width, node.y + node.height);
-    gcode += lineTo(node.x, node.y + node.height);
-    gcode += lineTo(node.x, node.y);
+    gcode += moveTo(globalPos.x, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y);
+    gcode += lineTo(globalPos.x + node.width, globalPos.y + node.height);
+    gcode += lineTo(globalPos.x, globalPos.y + node.height);
+    gcode += lineTo(globalPos.x, globalPos.y);
   } else if (
     node.type === "FRAME" ||
     node.type === "GROUP" ||
