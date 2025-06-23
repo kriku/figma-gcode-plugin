@@ -9,6 +9,25 @@ import "@ui/styles/main.scss";
 function App() {
   const [gcode, setGcode] = useState("");
   const [feedRate, setFeedRate] = useState(1000); // Default feed rate in mm/min
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const copyToClipboard = async () => {
+    if (!gcode.trim()) {
+      return;
+    }
+
+    try {
+      // await navigator.clipboard.writeText(gcode);
+      document.getElementById("gcodeOutput")?.focus();
+      // @ts-expect-error
+      document.getElementById("gcodeOutput")?.select();
+      document.execCommand("copy"); // Fallback for older browsers
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  };
 
   return (
     <div className="homepage">
@@ -57,7 +76,22 @@ function App() {
         >
           Generate G-code
         </Button>
+
+        {gcode && (
+          <Button
+            onClick={copyToClipboard}
+            style={{
+              marginLeft: 10,
+              backgroundColor: copySuccess ? '#4CAF50' : '#007ACC',
+              color: 'white'
+            }}
+          >
+            {copySuccess ? 'Copied!' : 'Copy to Clipboard'}
+          </Button>
+        )}
+
         <textarea
+          id="gcodeOutput"
           value={gcode}
           readOnly
           style={{ width: "100%", height: 300, marginTop: 10 }}
