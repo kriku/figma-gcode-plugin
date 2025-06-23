@@ -1,5 +1,10 @@
 import { PLUGIN, UI } from "@common/networkSides";
-import { generateGcodeForNode, generateFilename } from "./gcode-utils";
+import {
+  generateGcodeForNode,
+  generateFilename,
+  laserInlineOn,
+  laserInlineOff,
+} from "./gcode-utils";
 
 export const PLUGIN_CHANNEL = PLUGIN.channelBuilder()
   .emitsTo(UI, (message) => {
@@ -83,6 +88,7 @@ PLUGIN_CHANNEL.registerMessageHandler(
     gcode += `G21 ; Set units to millimeters\n`;
     gcode += `G90 ; Absolute positioning\n`;
     gcode += `G0 F${feedRateValue} S0 ; Set feed rate and ensure laser is off\n`;
+    gcode += laserInlineOn(); // Enable laser inline mode
     gcode += `\n`;
 
     for (const node of nodes) {
@@ -91,6 +97,7 @@ PLUGIN_CHANNEL.registerMessageHandler(
 
     // Add ending commands
     gcode += `\n; End of G-code\n`;
+    gcode += laserInlineOff(); // Disable laser inline mode
     gcode += `M30 ; Program end\n`;
 
     return gcode;

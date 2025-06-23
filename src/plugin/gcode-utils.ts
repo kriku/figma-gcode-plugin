@@ -1,3 +1,12 @@
+// Laser control commands for inline mode
+function laserInlineOn(): string {
+  return "M3 I ; Enable laser inline mode\n";
+}
+
+function laserInlineOff(): string {
+  return "M5 I ; Disable laser inline mode\n";
+}
+
 function moveTo(x: number, y: number, laserPower?: number): string {
   // G0 is rapid positioning (laser off), always set S0 for safety
   return `G0 X${x.toFixed(3)} Y${y.toFixed(3)} S0\n`;
@@ -749,3 +758,6 @@ export function generateFilename(nodes: readonly SceneNode[]): string {
 
   return `${baseName}_${timestamp}`;
 }
+
+// Export laser control functions
+export { laserInlineOn, laserInlineOff };
