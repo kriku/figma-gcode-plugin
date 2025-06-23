@@ -10,4 +10,5 @@ export const PLUGIN = Networker.createSide("Plugin-side").listens<{
   hello(text: string): void;
   createRect(width: number, height: number): void;
   exportSelection(): Promise<string>;
+  generateGcode(): Promise<string>;
 }>();

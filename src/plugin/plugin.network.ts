@@ -1,4 +1,5 @@
 import { PLUGIN, UI } from "@common/networkSides";
+import { generateGcodeForNode } from "./gcode-utils";
 
 export const PLUGIN_CHANNEL = PLUGIN.channelBuilder()
   .emitsTo(UI, (message) => {
@@ -57,4 +58,18 @@ PLUGIN_CHANNEL.registerMessageHandler("exportSelection", async () => {
   });
 
   return "data:image/png;base64," + figma.base64Encode(bytes);
+});
+
+PLUGIN_CHANNEL.registerMessageHandler("generateGcode", async () => {
+  const nodes = figma.currentPage.selection;
+  if (nodes.length === 0) {
+    throw new Error("No selection is present.");
+  }
+
+  let gcode = "";
+  for (const node of nodes) {
+    gcode += generateGcodeForNode(node);
+  }
+
+  return gcode;
 });
