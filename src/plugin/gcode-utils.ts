@@ -664,3 +664,25 @@ export function generateGcodeForNode(node: SceneNode): string {
 
   return gcode;
 }
+
+export function generateFilename(nodes: readonly SceneNode[]): string {
+  if (nodes.length === 0) {
+    return "gcode";
+  }
+
+  // Use the first node's name as base filename
+  let baseName = nodes[0].name || "untitled";
+
+  // Clean the name for use as filename (remove invalid characters)
+  baseName = baseName.replace(/[<>:"/\\|?*]/g, "_");
+
+  // Add count if multiple nodes
+  if (nodes.length > 1) {
+    baseName += `_and_${nodes.length - 1}_more`;
+  }
+
+  // Add timestamp
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+
+  return `${baseName}_${timestamp}`;
+}

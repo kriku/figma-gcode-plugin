@@ -9,23 +9,52 @@ import "@ui/styles/main.scss";
 function App() {
   const [gcode, setGcode] = useState("");
   const [feedRate, setFeedRate] = useState(1000); // Default feed rate in mm/min
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const copyToClipboard = async () => {
+  const saveToFile = () => {
     if (!gcode.trim()) {
       return;
     }
 
     try {
-      // await navigator.clipboard.writeText(gcode);
-      document.getElementById("gcodeOutput")?.focus();
-      // @ts-expect-error
-      document.getElementById("gcodeOutput")?.select();
-      document.execCommand("copy"); // Fallback for older browsers
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+      // Create a blob with the G-code content
+      const blob = new Blob([gcode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element to trigger download
+      const a = document.createElement('a');
+      a.href = url;
+
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+
+      // Try to extract a meaningful name from the G-code comments
+      let baseName = "figma_gcode";
+      const gcodeLines = gcode.split('\n');
+      for (const line of gcodeLines) {
+        if (line.includes('; RECTANGLE') || line.includes('; ELLIPSE') ||
+          line.includes('; POLYGON') || line.includes('; STAR') ||
+          line.includes('; LINE') || line.includes('; VECTOR')) {
+          const shapeType = line.replace(';', '').trim().toLowerCase();
+          baseName = `figma_${shapeType}`;
+          break;
+        }
+      }
+
+      a.download = `${baseName}_${timestamp}.nc`;
+
+      // Trigger download
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
+      console.error('Failed to save file:', err);
     }
   };
 
@@ -79,14 +108,13 @@ function App() {
 
         {gcode && (
           <Button
-            onClick={copyToClipboard}
+            onClick={saveToFile}
             style={{
-              marginLeft: 10,
-              backgroundColor: copySuccess ? '#4CAF50' : '#007ACC',
+              backgroundColor: saveSuccess ? '#4CAF50' : '#28a745',
               color: 'white'
             }}
           >
-            {copySuccess ? 'Copied!' : 'Copy to Clipboard'}
+            Save to File (.nc)
           </Button>
         )}
 
@@ -94,7 +122,14 @@ function App() {
           id="gcodeOutput"
           value={gcode}
           readOnly
-          style={{ width: "100%", height: 300, marginTop: 10 }}
+          placeholder="Generated G-code will appear here..."
+          style={{
+            width: "100%",
+            height: 300,
+            marginTop: gcode ? 0 : 10,
+            fontFamily: 'monospace',
+            fontSize: '12px'
+          }}
         />
       </div>
     </div>
