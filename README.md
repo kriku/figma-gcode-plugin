@@ -2,32 +2,11 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/CoconutGoodie/figma-plugin-react-vite/master/.github/assets/logo.png" height="100px" alt="Logo"/>
 </p>
-<h1 align="center">Figma Plugin Boilerplate: React + Vite</h1>
+<h1 align="center">Figma Plugin: Marlin GCODE generation</h1>
 
 <!-- Slogan -->
 <p align="center">
    Create scalable Figma plugins with ease, using the power of React + Vite!
-</p>
-
-<!-- Badges -->
-<p align="center">
-
-  <!-- Github Badges -->
-  <img src="https://raw.githubusercontent.com/TheSpawnProject/TheSpawnLanguage/master/.github/assets/github-badge.png" height="20px"/>
-  <a href="https://github.com/CoconutGoodie/figma-plugin-react-vite/commits/master">
-    <img src="https://img.shields.io/github/last-commit/CoconutGoodie/figma-plugin-react-vite"/>
-  </a>
-  <a href="https://github.com/CoconutGoodie/figma-plugin-react-vite/issues">
-    <img src="https://img.shields.io/github/issues/CoconutGoodie/figma-plugin-react-vite"/>
-  </a>
-
-  <br/>
-
-  <!-- Support Badges -->
-  <img src="https://raw.githubusercontent.com/TheSpawnProject/TheSpawnLanguage/master/.github/assets/support-badge.png" height="20px"/>
-  <a href="https://www.patreon.com/iGoodie">
-    <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DiGoodie%26type%3Dpatrons"/>
-  </a>
 </p>
 
 # 🗝 Key Features
