@@ -23,8 +23,7 @@ function generateCircleGcode(x: number, y: number, radius: number): string {
   let gcode = "";
   // Move to start position (rightmost point of circle)
   gcode += moveTo(x + radius, y);
-  // Draw circle using two 180-degree arcs
-  gcode += arcTo(x - radius, y, -radius, 0); // First semicircle
+  // Draw circle
   gcode += arcTo(x + radius, y, -radius, 0); // Second semicircle to complete circle
   return gcode;
 }
@@ -126,16 +125,329 @@ function generateLineGcode(node: LineNode): string {
 function generateVectorGcode(node: VectorNode): string {
   let gcode = "";
 
-  // For vector nodes, we'll approximate with a bounding box for now
-  // In a more advanced implementation, you'd parse the vector paths
-  gcode += "; VECTOR (approximated as bounding box)\n";
-  gcode += moveTo(node.x, node.y);
-  gcode += lineTo(node.x + node.width, node.y);
-  gcode += lineTo(node.x + node.width, node.y + node.height);
-  gcode += lineTo(node.x, node.y + node.height);
-  gcode += lineTo(node.x, node.y);
+  gcode += "; VECTOR\n";
+
+  // Process vector networks (paths)
+  if (node.vectorNetwork && node.vectorNetwork.segments.length > 0) {
+    gcode += parseVectorNetwork(node.vectorNetwork, node.x, node.y);
+  } else if (node.vectorPaths && node.vectorPaths.length > 0) {
+    // Fallback to vectorPaths if vectorNetwork is not available
+    gcode += parseVectorPaths([...node.vectorPaths], node.x, node.y);
+  } else {
+    // Final fallback to bounding box if no vector data available
+    gcode += "; VECTOR (no path data - using bounding box)\n";
+    gcode += moveTo(node.x, node.y);
+    gcode += lineTo(node.x + node.width, node.y);
+    gcode += lineTo(node.x + node.width, node.y + node.height);
+    gcode += lineTo(node.x, node.y + node.height);
+    gcode += lineTo(node.x, node.y);
+  }
 
   return gcode;
+}
+
+function parseVectorNetwork(
+  vectorNetwork: VectorNetwork,
+  offsetX: number,
+  offsetY: number
+): string {
+  let gcode = "";
+
+  const { vertices, segments } = vectorNetwork;
+
+  // Group segments by their connectivity to form paths
+  const paths = groupSegmentsIntoPaths([...segments]);
+
+  for (const path of paths) {
+    let isFirstPoint = true;
+
+    for (const segmentIndex of path) {
+      const segment = segments[segmentIndex];
+      const startVertex = vertices[segment.start];
+      const endVertex = vertices[segment.end];
+
+      // Convert relative coordinates to absolute
+      const startX = offsetX + startVertex.x;
+      const startY = offsetY + startVertex.y;
+      const endX = offsetX + endVertex.x;
+      const endY = offsetY + endVertex.y;
+
+      if (isFirstPoint) {
+        gcode += moveTo(startX, startY);
+        isFirstPoint = false;
+      }
+
+      if (
+        segment.tangentStart?.x ||
+        segment.tangentStart?.y ||
+        segment.tangentEnd?.x ||
+        segment.tangentEnd?.y
+      ) {
+        // Handle curved segments (Bezier curves)
+        gcode += generateBezierGcode(
+          startX,
+          startY,
+          endX,
+          endY,
+          segment.tangentStart,
+          segment.tangentEnd,
+          offsetX,
+          offsetY
+        );
+      } else {
+        // Straight line segment
+        gcode += lineTo(endX, endY);
+      }
+    }
+  }
+
+  return gcode;
+}
+
+function parseVectorPaths(
+  vectorPaths: VectorPath[],
+  offsetX: number,
+  offsetY: number
+): string {
+  let gcode = "";
+
+  for (const path of vectorPaths) {
+    if (path.data) {
+      gcode += parseSVGPath(path.data, offsetX, offsetY);
+    }
+  }
+
+  return gcode;
+}
+
+function parseSVGPath(
+  pathData: string,
+  offsetX: number,
+  offsetY: number
+): string {
+  let gcode = "";
+
+  // Simple SVG path parser - handles basic commands
+  const commands =
+    pathData.match(/[MmLlHhVvCcSsQqTtAaZz][^MmLlHhVvCcSsQqTtAaZz]*/g) || [];
+
+  let currentX = 0;
+  let currentY = 0;
+  let startX = 0;
+  let startY = 0;
+
+  for (const command of commands) {
+    const type = command[0];
+    const params = command
+      .slice(1)
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+      .filter((n) => !isNaN(n));
+
+    switch (type.toLowerCase()) {
+      case "m": // Move to
+        if (params.length >= 2) {
+          if (type === "M") {
+            // Absolute move
+            currentX = params[0];
+            currentY = params[1];
+          } else {
+            // Relative move
+            currentX += params[0];
+            currentY += params[1];
+          }
+          startX = currentX;
+          startY = currentY;
+          gcode += moveTo(offsetX + currentX, offsetY + currentY);
+        }
+        break;
+
+      case "l": // Line to
+        for (let i = 0; i < params.length; i += 2) {
+          if (i + 1 < params.length) {
+            if (type === "L") {
+              // Absolute line
+              currentX = params[i];
+              currentY = params[i + 1];
+            } else {
+              // Relative line
+              currentX += params[i];
+              currentY += params[i + 1];
+            }
+            gcode += lineTo(offsetX + currentX, offsetY + currentY);
+          }
+        }
+        break;
+
+      case "h": // Horizontal line
+        if (params.length >= 1) {
+          if (type === "H") {
+            currentX = params[0];
+          } else {
+            currentX += params[0];
+          }
+          gcode += lineTo(offsetX + currentX, offsetY + currentY);
+        }
+        break;
+
+      case "v": // Vertical line
+        if (params.length >= 1) {
+          if (type === "V") {
+            currentY = params[0];
+          } else {
+            currentY += params[0];
+          }
+          gcode += lineTo(offsetX + currentX, offsetY + currentY);
+        }
+        break;
+
+      case "c": // Cubic Bezier curve
+        for (let i = 0; i < params.length; i += 6) {
+          if (i + 5 < params.length) {
+            const cp1x = type === "C" ? params[i] : currentX + params[i];
+            const cp1y =
+              type === "C" ? params[i + 1] : currentY + params[i + 1];
+            const cp2x =
+              type === "C" ? params[i + 2] : currentX + params[i + 2];
+            const cp2y =
+              type === "C" ? params[i + 3] : currentY + params[i + 3];
+            const endX =
+              type === "C" ? params[i + 4] : currentX + params[i + 4];
+            const endY =
+              type === "C" ? params[i + 5] : currentY + params[i + 5];
+
+            // Approximate Bezier curve with line segments
+            gcode += approximateBezierCurve(
+              offsetX + currentX,
+              offsetY + currentY,
+              offsetX + cp1x,
+              offsetY + cp1y,
+              offsetX + cp2x,
+              offsetY + cp2y,
+              offsetX + endX,
+              offsetY + endY
+            );
+
+            currentX = endX;
+            currentY = endY;
+          }
+        }
+        break;
+
+      case "z": // Close path
+        gcode += lineTo(offsetX + startX, offsetY + startY);
+        currentX = startX;
+        currentY = startY;
+        break;
+    }
+  }
+
+  return gcode;
+}
+
+function generateBezierGcode(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  tangentStart: VectorVertex | undefined,
+  tangentEnd: VectorVertex | undefined,
+  offsetX: number,
+  offsetY: number
+): string {
+  if (!tangentStart && !tangentEnd) {
+    // No tangents, just a straight line
+    return lineTo(endX, endY);
+  }
+
+  // Convert tangent points to control points
+  const cp1x = tangentStart ? startX + tangentStart.x : startX;
+  const cp1y = tangentStart ? startY + tangentStart.y : startY;
+  const cp2x = tangentEnd ? endX + tangentEnd.x : endX;
+  const cp2y = tangentEnd ? endY + tangentEnd.y : endY;
+
+  return approximateBezierCurve(
+    startX,
+    startY,
+    cp1x,
+    cp1y,
+    cp2x,
+    cp2y,
+    endX,
+    endY
+  );
+}
+
+function approximateBezierCurve(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  x3: number,
+  y3: number,
+  segments: number = 16
+): string {
+  let gcode = "";
+
+  for (let i = 1; i <= segments; i++) {
+    const t = i / segments;
+    const oneMinusT = 1 - t;
+
+    // Cubic Bezier formula
+    const x =
+      oneMinusT ** 3 * x0 +
+      3 * oneMinusT ** 2 * t * x1 +
+      3 * oneMinusT * t ** 2 * x2 +
+      t ** 3 * x3;
+
+    const y =
+      oneMinusT ** 3 * y0 +
+      3 * oneMinusT ** 2 * t * y1 +
+      3 * oneMinusT * t ** 2 * y2 +
+      t ** 3 * y3;
+
+    gcode += lineTo(x, y);
+  }
+
+  return gcode;
+}
+
+function groupSegmentsIntoPaths(segments: VectorSegment[]): number[][] {
+  const paths: number[][] = [];
+  const used = new Set<number>();
+
+  for (let i = 0; i < segments.length; i++) {
+    if (used.has(i)) continue;
+
+    const path: number[] = [i];
+    used.add(i);
+
+    // Try to find connected segments
+    let currentEnd = segments[i].end;
+    let foundConnection = true;
+
+    while (foundConnection) {
+      foundConnection = false;
+      for (let j = 0; j < segments.length; j++) {
+        if (used.has(j)) continue;
+
+        if (segments[j].start === currentEnd) {
+          path.push(j);
+          used.add(j);
+          currentEnd = segments[j].end;
+          foundConnection = true;
+          break;
+        }
+      }
+    }
+
+    paths.push(path);
+  }
+
+  return paths;
 }
 
 function generateBooleanOperationGcode(node: BooleanOperationNode): string {
@@ -209,6 +521,8 @@ function generateCompoundGcode(
 }
 
 export function generateGcodeForNode(node: SceneNode): string {
+  console.log("Generating G-code for vector node:", node);
+
   let gcode = "";
 
   if (node.type === "RECTANGLE") {
