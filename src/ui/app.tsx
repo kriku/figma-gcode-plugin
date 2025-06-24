@@ -67,106 +67,94 @@ function App() {
 
   return (
     <div className="homepage">
-      <h1>Figma to G-code</h1>
-
+      <h2>G-code generation</h2>
       {/* Selection hint */}
-      <div className="info-card notification-card">
-        <strong>💡 Before generating G-code:</strong>
-        <br />
-        Select one or more objects in Figma:
-        <br />
-        <strong>• Vector shapes:</strong> rectangles, ellipses, polygons, stars, lines, vector paths (traced precisely)
-        <br />
-        <strong>• Containers:</strong> frames, groups, sections (processes all children)
-        <br />
-        <strong>• Other objects:</strong> boolean operations, instances, slices, text (generates outline rectangles)
+      <div className="notification-place">
+
+        {!error && (
+          <div className="info-card notification-card">
+            <strong>💡 Before generating G-code:</strong>
+            <br />
+            Select one or more objects in Figma:
+            <br />
+            <strong>• Vector shapes:</strong> rectangles, ellipses, polygons, stars, lines, vector paths (traced precisely)
+            <br />
+            <strong>• Containers:</strong> frames, groups, sections (processes all children)
+            <br />
+            <strong>• Other objects:</strong> boolean operations, instances, slices, text (generates outline rectangles)
+          </div>
+        )}
+
+        {/* Error display */}
+        {error && (
+          <div className="error-card notification-card fade-in">
+            <strong>❌ Error:</strong> {error}
+          </div>
+        )}
       </div>
 
-      {/* Error display */}
-      {error && (
-        <div className="error-card notification-card fade-in">
-          <strong>❌ Error:</strong> {error}
-        </div>
-      )}
-
-      {/* Success message */}
-      {saveSuccess && (
-        <div className="success-card notification-card fade-in">
-          <strong>✅ File saved successfully!</strong>
-        </div>
-      )}
-
       <div className="card">
-        <div style={{ marginBottom: 15 }}>
-          <label htmlFor="feedRate" style={{ display: "block", marginBottom: 5 }}>
-            Laser Feed Rate (mm/min):
-          </label>
-          <input
-            id="feedRate"
-            type="number"
-            value={feedRate}
-            onChange={(e) => {
-              setFeedRate(Number(e.target.value));
-              if (error) setError(""); // Clear error when user modifies input
-            }}
-            min="1"
-            max="10000"
-            style={{
-              width: "100%",
-              padding: "5px 10px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "14px"
-            }}
-          />
+        {/* Parameters Section */}
+        <div className="parameters-section">
+          <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "600" }}>
+            Laser Parameters
+          </h3>
+
+          <div className="parameter-row">
+            <label htmlFor="laserPower" className="parameter-label">
+              Laser Power (0-1000):
+            </label>
+            <input
+              id="laserPower"
+              type="number"
+              value={laserPower}
+              onChange={(e) => {
+                setLaserPower(Number(e.target.value));
+                if (error) setError(""); // Clear error when user modifies input
+              }}
+              min="0"
+              max="1000"
+              className="parameter-input"
+            />
+          </div>
+
+          <div className="parameter-row">
+            <label htmlFor="feedRate" className="parameter-label">
+              Feed Rate (mm/min):
+            </label>
+            <input
+              id="feedRate"
+              type="number"
+              value={feedRate}
+              onChange={(e) => {
+                setFeedRate(Number(e.target.value));
+                if (error) setError(""); // Clear error when user modifies input
+              }}
+              min="1"
+              max="10000"
+              className="parameter-input"
+            />
+          </div>
+
+          <div className="parameter-row">
+            <label htmlFor="rapidFeedRate" className="parameter-label">
+              Rapid Rate (mm/min):
+            </label>
+            <input
+              id="rapidFeedRate"
+              type="number"
+              value={rapidFeedRate}
+              onChange={(e) => {
+                setRapidFeedRate(Number(e.target.value));
+                if (error) setError(""); // Clear error when user modifies input
+              }}
+              min="1"
+              max="20000"
+              className="parameter-input"
+            />
+          </div>
         </div>
-        <div style={{ marginBottom: 15 }}>
-          <label htmlFor="rapidFeedRate" style={{ display: "block", marginBottom: 5 }}>
-            Rapid Movement Feed Rate (mm/min):
-          </label>
-          <input
-            id="rapidFeedRate"
-            type="number"
-            value={rapidFeedRate}
-            onChange={(e) => {
-              setRapidFeedRate(Number(e.target.value));
-              if (error) setError(""); // Clear error when user modifies input
-            }}
-            min="1"
-            max="20000"
-            style={{
-              width: "100%",
-              padding: "5px 10px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "14px"
-            }}
-          />
-        </div>
-        <div style={{ marginBottom: 15 }}>
-          <label htmlFor="laserPower" style={{ display: "block", marginBottom: 5 }}>
-            Laser Power (S parameter, 0-1000):
-          </label>
-          <input
-            id="laserPower"
-            type="number"
-            value={laserPower}
-            onChange={(e) => {
-              setLaserPower(Number(e.target.value));
-              if (error) setError(""); // Clear error when user modifies input
-            }}
-            min="0"
-            max="1000"
-            style={{
-              width: "100%",
-              padding: "5px 10px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              fontSize: "14px"
-            }}
-          />
-        </div>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <div className="action-buttons">
           <Button
             onClick={async () => {
               setError(""); // Clear previous errors
@@ -207,7 +195,7 @@ function App() {
               }
             }}
             disabled={isGenerating}
-            style={{ flex: 1 }}
+            className="generate-button"
           >
             {isGenerating ? "Generating..." : "Generate G-code"}
           </Button>
@@ -221,40 +209,27 @@ function App() {
               setRapidFeedRate(3000);
               setLaserPower(1000);
             }}
-            style={{
-              backgroundColor: '#6c757d',
-              border: '1px solid #6c757d',
-              color: 'white'
-            }}
+            className="clear-button"
           >
             Clear
           </Button>
-        </div>
 
-        {gcode && (
-          <Button
-            onClick={saveToFile}
-            style={{
-              backgroundColor: saveSuccess ? '#4CAF50' : '#28a745',
-              color: 'white'
-            }}
-          >
-            Save to File (.nc)
-          </Button>
-        )}
+          {gcode && (
+            <Button
+              onClick={saveToFile}
+              className={`save-button ${saveSuccess ? 'success' : ''}`}
+            >
+              Save to File (.nc)
+            </Button>
+          )}
+        </div>
 
         <textarea
           id="gcodeOutput"
           value={gcode}
           readOnly
           placeholder="Generated G-code will appear here..."
-          style={{
-            width: "100%",
-            height: 300,
-            marginTop: gcode ? 0 : 10,
-            fontFamily: 'monospace',
-            fontSize: '12px'
-          }}
+          className="gcode-textarea"
         />
       </div>
     </div>

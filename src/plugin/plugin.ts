@@ -5,17 +5,11 @@ import { Networker } from "monorepo-networker";
 async function bootstrap() {
   Networker.initialize(PLUGIN, PLUGIN_CHANNEL);
 
-  if (figma.editorType === "figma") {
+  if (figma.editorType === "figma" || figma.editorType === "figjam") {
     figma.showUI(__html__, {
       width: 800,
-      height: 650,
-      title: "Figma to G-code",
-    });
-  } else if (figma.editorType === "figjam") {
-    figma.showUI(__html__, {
-      width: 800,
-      height: 650,
-      title: "Figma to G-code",
+      height: 800,
+      title: "G-code generation",
     });
   }
 
