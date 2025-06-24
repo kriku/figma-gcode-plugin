@@ -9,6 +9,7 @@ import "@ui/styles/main.scss";
 function App() {
   const [gcode, setGcode] = useState("");
   const [feedRate, setFeedRate] = useState(1000); // Default feed rate in mm/min
+  const [rapidFeedRate, setRapidFeedRate] = useState(3000); // Default rapid feed rate in mm/min
   const [laserPower, setLaserPower] = useState(1000); // Default laser power (S parameter)
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -85,6 +86,26 @@ function App() {
           />
         </div>
         <div style={{ marginBottom: 15 }}>
+          <label htmlFor="rapidFeedRate" style={{ display: "block", marginBottom: 5 }}>
+            Rapid Movement Feed Rate (mm/min):
+          </label>
+          <input
+            id="rapidFeedRate"
+            type="number"
+            value={rapidFeedRate}
+            onChange={(e) => setRapidFeedRate(Number(e.target.value))}
+            min="1"
+            max="20000"
+            style={{
+              width: "100%",
+              padding: "5px 10px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              fontSize: "14px"
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: 15 }}>
           <label htmlFor="laserPower" style={{ display: "block", marginBottom: 5 }}>
             Laser Power (S parameter, 0-1000):
           </label>
@@ -110,7 +131,7 @@ function App() {
               const result = await UI_CHANNEL.request(
                 PLUGIN,
                 "generateGcode",
-                [feedRate, laserPower]
+                [feedRate, rapidFeedRate, laserPower]
               );
               if (typeof result === "string") {
                 setGcode(result);

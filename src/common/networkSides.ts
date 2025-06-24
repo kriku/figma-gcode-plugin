@@ -10,5 +10,9 @@ export const PLUGIN = Networker.createSide("Plugin-side").listens<{
   hello(text: string): void;
   createRect(width: number, height: number): void;
   exportSelection(): Promise<string>;
-  generateGcode(feedRate?: number, laserPower?: number): Promise<string>;
+  generateGcode(
+    feedRate?: number,
+    rapidFeedRate?: number,
+    laserPower?: number
+  ): Promise<string>;
 }>();
