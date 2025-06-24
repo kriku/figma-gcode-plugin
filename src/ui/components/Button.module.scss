@@ -7,9 +7,9 @@
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s, opacity 0.25s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: #646cff;
   }
 
@@ -18,9 +18,22 @@
     outline: 4px auto -webkit-focus-ring-color;
   }
 
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    &:hover {
+      border-color: transparent;
+    }
+  }
+
   @media (prefers-color-scheme: light) {
     & {
       background-color: #f9f9f9;
+    }
+
+    &:disabled {
+      background-color: #e0e0e0;
     }
   }
 }

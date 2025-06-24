@@ -30,6 +30,17 @@ export class GcodeGenerator {
     rapidFeedRate: number = 3000,
     laserPower: number = 255
   ): string {
+    // Validate inputs
+    if (!nodes || nodes.length === 0) {
+      throw new Error("No nodes provided for G-code generation.");
+    }
+
+    if (feedRate <= 0 || rapidFeedRate <= 0 || laserPower < 0) {
+      throw new Error(
+        "Invalid parameters: feed rates must be positive and laser power must be non-negative."
+      );
+    }
+
     const settings: GcodeSettings = { feedRate, rapidFeedRate, laserPower };
 
     this.mainBuilder.reset();
@@ -37,14 +48,47 @@ export class GcodeGenerator {
     // Add header comments and setup
     this.addHeader(nodes, settings);
 
+    let processedNodes = 0;
+
     // Process each selected node
     for (const node of nodes) {
-      const gcode = this.generateForNode(node, settings);
-      this.mainBuilder
-        .addComment("")
-        .addComment(`Processing node: ${node.name || "Unnamed"}`);
-      // Add the generated gcode directly since it's already built
-      this.mainBuilder.addCommand({ execute: () => gcode });
+      try {
+        const gcode = this.generateForNode(node, settings);
+        if (gcode && gcode.trim().length > 0) {
+          this.mainBuilder
+            .addComment("")
+            .addComment(
+              `Processing node: ${node.name || "Unnamed"} (${node.type})`
+            );
+          // Add the generated gcode directly since it's already built
+          this.mainBuilder.addCommand({ execute: () => gcode });
+          processedNodes++;
+        } else {
+          this.mainBuilder
+            .addComment("")
+            .addComment(
+              `Skipped node: ${node.name || "Unnamed"} (${
+                node.type
+              }) - no geometry generated`
+            );
+        }
+      } catch (error) {
+        console.warn(
+          `Failed to process node ${node.name || "Unnamed"} (${node.type}):`,
+          error
+        );
+        this.mainBuilder
+          .addComment("")
+          .addComment(
+            `Error processing node: ${node.name || "Unnamed"} (${node.type})`
+          );
+      }
+    }
+
+    if (processedNodes === 0) {
+      throw new Error(
+        "No valid geometry was generated from the selected objects. Please check that you have selected supported shape types."
+      );
     }
 
     // Add footer
@@ -54,10 +98,31 @@ export class GcodeGenerator {
   }
 
   private generateForNode(node: SceneNode, settings: GcodeSettings): string {
-    const generator = ShapeGeneratorFactory.createGenerator(node.type);
-    const globalPos = this.coordinateTransformer.getGlobalCoordinates(node);
+    try {
+      const generator = ShapeGeneratorFactory.createGenerator(node.type);
+      const globalPos = this.coordinateTransformer.getGlobalCoordinates(node);
 
-    return generator.generate(node, globalPos, settings);
+      const result = generator.generate(node, globalPos, settings);
+
+      // Validate that we got some meaningful output
+      if (!result || result.trim().length === 0) {
+        throw new Error(`No G-code generated for ${node.type}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error(
+        `Error generating G-code for node ${node.name || "Unnamed"} (${
+          node.type
+        }):`,
+        error
+      );
+      throw new Error(
+        `Failed to generate G-code for ${node.type}: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   }
 
   private addHeader(

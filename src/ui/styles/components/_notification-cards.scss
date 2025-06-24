@@ -1,0 +1,73 @@
+// Notification cards for errors, success, and info messages
+
+.info-card {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+
+  strong {
+    color: #1976d2;
+  }
+}
+
+.error-card {
+  background: #ffebee;
+  border: 1px solid #f44336;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #d32f2f;
+  text-align: left;
+
+  strong {
+    color: #c62828;
+  }
+}
+
+.success-card {
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #2e7d32;
+  text-align: left;
+
+  strong {
+    color: #1b5e20;
+  }
+}
+
+// Animation for showing/hiding cards
+.notification-card {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease-in-out;
+
+  &.fade-in {
+    animation: fadeInUp 0.3s ease-out;
+  }
+
+  &.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
