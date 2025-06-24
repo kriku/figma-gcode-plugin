@@ -1,7 +1,6 @@
 import { PLUGIN, UI } from "@common/networkSides";
 import { PLUGIN_CHANNEL } from "@plugin/plugin.network";
 import { Networker } from "monorepo-networker";
-import { generateGcodeForNode } from "./gcode-utils";
 
 async function bootstrap() {
   Networker.initialize(PLUGIN, PLUGIN_CHANNEL);
