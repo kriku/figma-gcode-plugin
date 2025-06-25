@@ -4,9 +4,8 @@
 <!-- Slogan -->
 <p align="center">
    Convert your Figma designs into G-code for laser cutting and engraving with Marlin firmware!
-<img width="1593" alt="Screenshot 2025-06-25 at 7 54 35 AM" src="https://github.com/user-attachments/assets/63db9b62-c200-4bbd-9720-86c6c4dd8ef8" />
 
-
+   <img width="1235" alt="Figma Plugin: Marlin G-Code Generator Interface Screenshot" src="https://github.com/user-attachments/assets/3f634ef4-6672-41ea-a851-e3bcd2d5e5b4" />
 </p>
 
 # 🗝 Key Features
