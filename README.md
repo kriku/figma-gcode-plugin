@@ -1,15 +1,12 @@
 <!-- Logo -->
-<p align="center">
-  <!-- <img src="path/to/your/logo.png" height="100px" alt="Marlin G-Code Generator Logo"/> -->
-  🔥⚡
-</p>
 <h1 align="center">Figma Plugin: Marlin G-Code Generator</h1>
 
 <!-- Slogan -->
 <p align="center">
    Convert your Figma designs into G-code for laser cutting and engraving with Marlin firmware!
+<img width="1593" alt="Screenshot 2025-06-25 at 7 54 35 AM" src="https://github.com/user-attachments/assets/63db9b62-c200-4bbd-9720-86c6c4dd8ef8" />
 
-  <img width="1600" alt="Screenshot 2025-06-23 at 10 29 36 PM" src="https://github.com/user-attachments/assets/3b10584f-e960-4c3e-bfcd-d805521864eb" />
+
 </p>
 
 # 🗝 Key Features
