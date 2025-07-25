@@ -81,13 +81,15 @@ PLUGIN_CHANNEL.registerMessageHandler(
       // All node types are supported via the ShapeGeneratorFactory fallback system
       // Primary shapes get precise tracing, containers process children, others get bounding boxes
 
-      // Use the new GcodeGenerator
-      const generator = new GcodeGenerator();
+      // Use path optimization
+      const optimizeTravel = true;
+      const generator = new GcodeGenerator(optimizeTravel);
       const gcode = generator.generateGcode(
         nodes,
         feedRateValue,
         rapidFeedRateValue,
-        laserPowerValue
+        laserPowerValue,
+        optimizeTravel
       );
 
       if (!gcode || gcode.trim().length === 0) {

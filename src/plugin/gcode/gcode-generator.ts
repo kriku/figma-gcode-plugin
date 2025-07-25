@@ -8,14 +8,17 @@ import {
   EndProgramCommand,
 } from "./commands";
 import { GcodeBuilderImpl } from "./builder";
+import { generateOptimizedGcode, generateStandardGcode } from "../gcode-utils";
 
 export class GcodeGenerator {
   private coordinateTransformer: CoordinateTransformer;
   private mainBuilder: GcodeBuilderImpl;
+  private optimizeTravel: boolean = false;
 
-  constructor() {
+  constructor(optimizeTravel: boolean = false) {
     this.coordinateTransformer = new CoordinateTransformerImpl();
     this.mainBuilder = new GcodeBuilderImpl();
+    this.optimizeTravel = optimizeTravel;
 
     // Set the node processor for compound shapes
     ShapeGeneratorFactory.setNodeProcessor(
@@ -25,6 +28,42 @@ export class GcodeGenerator {
   }
 
   generateGcode(
+    nodes: readonly SceneNode[],
+    feedRate: number = 1000,
+    rapidFeedRate: number = 3000,
+    laserPower: number = 255,
+    optimizeTravel?: boolean,
+    startPosition?: { x: number; y: number }
+  ): string {
+    // Validate inputs
+    if (!nodes || nodes.length === 0) {
+      throw new Error("No nodes provided for G-code generation.");
+    }
+
+    if (feedRate <= 0 || rapidFeedRate <= 0 || laserPower < 0) {
+      throw new Error(
+        "Invalid parameters: feed rates must be positive and laser power must be non-negative."
+      );
+    }
+
+    // Use path optimization if requested or if set in constructor
+    const shouldOptimize = optimizeTravel ?? this.optimizeTravel;
+
+    if (shouldOptimize) {
+      return generateOptimizedGcode(
+        nodes,
+        laserPower,
+        rapidFeedRate,
+        feedRate,
+        startPosition
+      );
+    } else {
+      return generateStandardGcode(nodes, laserPower, rapidFeedRate, feedRate);
+    }
+  }
+
+  // Keep the old implementation for compatibility when called directly
+  generateGcodeClassic(
     nodes: readonly SceneNode[],
     feedRate: number = 1000,
     rapidFeedRate: number = 3000,

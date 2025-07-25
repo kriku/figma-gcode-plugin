@@ -14,8 +14,8 @@ export function generateGcodeForNode(
   rapidFeedRate?: number,
   feedRate?: number
 ): string {
-  const generator = new GcodeGenerator();
-  return generator.generateGcode(
+  const generator = new GcodeGenerator(false); // Use classic approach for single nodes
+  return generator.generateGcodeClassic(
     [node],
     feedRate || 1000,
     rapidFeedRate || 3000,
