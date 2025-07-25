@@ -1,3 +1,115 @@
+// Brand colors
 $brand-figma: #adadad;
 $brand-vite: #646cff;
 $brand-react: #61dafb;
+
+// Theme system using CSS custom properties
+:root {
+  // Light theme colors
+  --color-primary: #646cff;
+  --color-primary-hover: #535bf2;
+  --color-text: #213547;
+  --color-text-secondary: #6b7280;
+  --color-background: #ffffff;
+  --color-surface: #f9f9f9;
+  --color-surface-hover: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+
+  // Button colors
+  --button-bg: #f9f9f9;
+  --button-bg-hover: #f3f4f6;
+  --button-bg-disabled: #e5e7eb;
+  --button-text: #374151;
+  --button-border: #d1d5db;
+  --button-border-hover: #646cff;
+
+  // Action button colors
+  --button-secondary-bg: #6c757d;
+  --button-secondary-bg-hover: #5a6268;
+  --button-secondary-border: #6c757d;
+  --button-secondary-border-hover: #545b62;
+
+  --button-success-bg: #28a745;
+  --button-success-bg-hover: #218838;
+  --button-success-border: #28a745;
+  --button-success-border-hover: #1e7e34;
+
+  // Textarea colors
+  --textarea-bg: var(--color-surface);
+  --textarea-border: var(--color-border);
+  --textarea-border-focus: var(--color-primary);
+  --textarea-text: var(--color-text);
+
+  // Notification colors - light theme
+  --info-bg: #e3f2fd;
+  --info-border: #2196f3;
+  --info-text: #1565c0;
+  --info-text-strong: #1976d2;
+
+  --error-bg: #ffebee;
+  --error-border: #f44336;
+  --error-text: #d32f2f;
+  --error-text-strong: #c62828;
+
+  --success-bg: #e8f5e8;
+  --success-border: #4caf50;
+  --success-text: #2e7d32;
+  --success-text-strong: #1b5e20;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    // Dark theme colors
+    --color-primary: #646cff;
+    --color-primary-hover: #747bff;
+    --color-text: rgba(255, 255, 255, 0.87);
+    --color-text-secondary: #9ca3af;
+    --color-background: #1a1a1a;
+    --color-surface: #2d2d2d;
+    --color-surface-hover: #3a3a3a;
+    --color-border: #404040;
+    --color-border-hover: #525252;
+
+    // Button colors - dark theme
+    --button-bg: #2d2d2d;
+    --button-bg-hover: #3a3a3a;
+    --button-bg-disabled: #1f1f1f;
+    --button-text: rgba(255, 255, 255, 0.87);
+    --button-border: #404040;
+    --button-border-hover: #646cff;
+
+    // Action button colors (keep similar in dark mode)
+    --button-secondary-bg: #6c757d;
+    --button-secondary-bg-hover: #5a6268;
+    --button-secondary-border: #6c757d;
+    --button-secondary-border-hover: #545b62;
+
+    --button-success-bg: #28a745;
+    --button-success-bg-hover: #218838;
+    --button-success-border: #28a745;
+    --button-success-border-hover: #1e7e34;
+
+    // Textarea colors - dark theme
+    --textarea-bg: var(--color-surface);
+    --textarea-border: var(--color-border);
+    --textarea-border-focus: var(--color-primary);
+    --textarea-text: var(--color-text);
+
+    // Notification colors - dark theme
+    --info-bg: #0d1b2a;
+    --info-border: #1976d2;
+    --info-text: #90caf9;
+    --info-text-strong: #64b5f6;
+
+    --error-bg: #2c1618;
+    --error-border: #d32f2f;
+    --error-text: #f48fb1;
+    --error-text-strong: #ec407a;
+
+    --success-bg: #1b2f1b;
+    --success-border: #388e3c;
+    --success-text: #a5d6a7;
+    --success-text-strong: #81c784;
+  }
+}

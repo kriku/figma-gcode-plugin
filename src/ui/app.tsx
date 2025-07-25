@@ -200,27 +200,29 @@ function App() {
             {isGenerating ? "Generating..." : "Generate G-code"}
           </Button>
 
-          <Button
-            onClick={() => {
-              setGcode("");
-              setError("");
-              setSaveSuccess(false);
-              setFeedRate(1000);
-              setRapidFeedRate(3000);
-              setLaserPower(1000);
-            }}
-            className="clear-button"
-          >
-            Clear
-          </Button>
-
           {gcode && (
-            <Button
-              onClick={saveToFile}
-              className={`save-button ${saveSuccess ? 'success' : ''}`}
-            >
-              Save to File (.nc)
-            </Button>
+            <>
+              <Button
+                onClick={() => {
+                  setGcode("");
+                  setError("");
+                  setSaveSuccess(false);
+                  setFeedRate(1000);
+                  setRapidFeedRate(3000);
+                  setLaserPower(1000);
+                }}
+                className="clear-button"
+              >
+                Clear
+              </Button>
+
+              <Button
+                onClick={saveToFile}
+                className={`save-button ${saveSuccess ? 'success' : ''}`}
+              >
+                Save to File (.nc)
+              </Button>
+            </>
           )}
         </div>
 

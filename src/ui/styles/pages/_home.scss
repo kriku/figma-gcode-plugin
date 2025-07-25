@@ -49,9 +49,9 @@
   .parameters-section {
     margin-bottom: 16px;
     padding: 12px;
-    background-color: #f8f9fa;
+    background-color: var(--color-surface);
     border-radius: 6px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--color-border);
   }
 
   .parameter-row {
@@ -69,7 +69,7 @@
     flex: 0 0 400px;
     font-size: 14px;
     font-weight: 500;
-    color: #495057;
+    color: var(--color-text-secondary);
     text-align: left;
     margin: 0;
   }
@@ -77,20 +77,21 @@
   .parameter-input {
     flex: 1;
     padding: 6px 10px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 14px;
-    background-color: #fff;
+    background-color: var(--color-background);
+    color: var(--color-text);
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 
     &:focus {
       outline: none;
-      border-color: #80bdff;
-      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 0.2rem rgba(100, 108, 255, 0.25);
     }
 
     &:hover {
-      border-color: #adb5bd;
+      border-color: var(--color-border-hover);
     }
   }
 
@@ -108,20 +109,20 @@
   }
 
   .clear-button {
-    background-color: #6c757d !important;
-    border: 1px solid #6c757d !important;
+    background-color: var(--button-secondary-bg) !important;
+    border: 1px solid var(--button-secondary-border) !important;
     color: white !important;
     min-width: 80px;
 
     &:hover {
-      background-color: #5a6268 !important;
-      border-color: #545b62 !important;
+      background-color: var(--button-secondary-bg-hover) !important;
+      border-color: var(--button-secondary-border-hover) !important;
     }
   }
 
   .save-button {
-    background-color: #28a745 !important;
-    border: 1px solid #28a745 !important;
+    background-color: var(--button-success-bg) !important;
+    border: 1px solid var(--button-success-border) !important;
     color: white !important;
     min-width: 120px;
 
@@ -131,8 +132,8 @@
     }
 
     &:hover {
-      background-color: #218838 !important;
-      border-color: #1e7e34 !important;
+      background-color: var(--button-success-bg-hover) !important;
+      border-color: var(--button-success-border-hover) !important;
     }
   }
 
@@ -144,21 +145,22 @@
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 12px;
     padding: 12px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--textarea-border);
     border-radius: 4px;
-    background-color: #f8f9fa;
+    background-color: var(--textarea-bg);
+    color: var(--textarea-text);
     resize: vertical;
     min-height: 200px;
 
     &:focus {
       outline: none;
-      border-color: #80bdff;
-      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      border-color: var(--textarea-border-focus);
+      box-shadow: 0 0 0 0.2rem rgba(100, 108, 255, 0.25);
     }
   }
 
   .read-the-docs {
-    color: #888;
+    color: var(--color-text-secondary);
     & > span {
       font-family: Alkatra;
     }

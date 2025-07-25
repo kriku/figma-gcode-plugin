@@ -1,0 +1,38 @@
+// Theme utilities and mixins
+
+// Smooth transition for theme changes
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+// Focus ring using theme colors
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// Card styles that adapt to theme
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+// Input styles that adapt to theme
+.input-field {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 4px;
+  padding: 0.5rem;
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(100, 108, 255, 0.25);
+  }
+
+  &::placeholder {
+    color: var(--color-text-secondary);
+  }
+}

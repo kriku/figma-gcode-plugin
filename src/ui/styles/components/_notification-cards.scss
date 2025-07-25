@@ -1,47 +1,48 @@
 // Notification cards for errors, success, and info messages
 
 .info-card {
-  background: #e3f2fd;
-  border: 1px solid #2196f3;
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 16px;
   font-size: 14px;
   line-height: 1.4;
   text-align: left;
+  color: var(--info-text);
 
   strong {
-    color: #1976d2;
+    color: var(--info-text-strong);
   }
 }
 
 .error-card {
-  background: #ffebee;
-  border: 1px solid #f44336;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: #d32f2f;
+  color: var(--error-text);
   text-align: left;
 
   strong {
-    color: #c62828;
+    color: var(--error-text-strong);
   }
 }
 
 .success-card {
-  background: #e8f5e8;
-  border: 1px solid #4caf50;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
   border-radius: 6px;
   padding: 12px;
   margin-bottom: 16px;
   font-size: 14px;
-  color: #2e7d32;
+  color: var(--success-text);
   text-align: left;
 
   strong {
-    color: #1b5e20;
+    color: var(--success-text-strong);
   }
 }
 
