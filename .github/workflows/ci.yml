@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Security audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+        
+      - name: Type check
+        run: npm run types
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Verify build artifacts
+        run: |
+          echo "Checking build artifacts..."
+          ls -la dist/
+          test -f dist/manifest.json || (echo "manifest.json missing" && exit 1)
+          test -f dist/plugin.js || (echo "plugin.js missing" && exit 1)  
+          test -f dist/index.html || (echo "index.html missing" && exit 1)
+          echo "All build artifacts verified successfully!"
+          
+      - name: Check manifest content
+        run: |
+          echo "Verifying manifest.json content..."
+          cat dist/manifest.json
+          jq . dist/manifest.json > /dev/null || (echo "Invalid JSON in manifest.json" && exit 1)
+          echo "Manifest JSON is valid!"
