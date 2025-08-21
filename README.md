@@ -97,6 +97,22 @@ Once running, the `dist/` folder will contain your built plugin files including 
 > [!TIP]
 > Enable `Hot reload plugin` in Figma to automatically reload when files in `dist/` change during development.
 
+### 🤖 Continuous Integration
+
+The project includes GitHub Actions workflows for automated CI/CD:
+
+- **CI Pipeline** (`.github/workflows/ci.yml`): Runs on pull requests and pushes
+  - Type checking with TypeScript
+  - Building both UI and plugin components
+  - Build artifact verification
+  - Security audit
+  - Tested on Node.js 18 and 20
+
+- **Security Monitoring** (`.github/workflows/security.yml`): Weekly dependency checks
+  - Security vulnerability scanning
+  - Outdated dependency detection
+  - Package validation
+
 ### 🦴 UI Development Mode
 
 Develop and test the plugin UI in a browser without Figma context:
