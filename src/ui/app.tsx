@@ -180,14 +180,15 @@ function App() {
                 if (typeof result === "string") {
                   setGcode(result);
                 }
-              } catch (err) {
+              } catch (err: unknown) {
                 if (err instanceof NetworkError) {
                   setError(err.message || "Failed to generate G-code. Please check your selection and try again.");
                   console.log("Couldn't generate gcode..", {
                     message: err.message,
                   });
                 } else {
-                  setError("An unexpected error occurred while generating G-code.");
+                  const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred while generating G-code.";
+                  setError(errorMessage);
                   console.error("Unexpected error:", err);
                 }
               } finally {
