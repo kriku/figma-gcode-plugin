@@ -1,0 +1,1 @@
+// Jest setup file - empty for now since we're using CommonJS preset
