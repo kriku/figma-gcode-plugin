@@ -8,7 +8,8 @@ module.exports = {
   ],
   testPathIgnorePatterns: [
     '/__tests__/mock-nodes.ts',
-    '/__tests__/setup.ts'
+    '/__tests__/setup.ts',
+    '/__tests__/global-types.d.ts'
   ],
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest'
